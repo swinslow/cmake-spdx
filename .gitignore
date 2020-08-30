@@ -1,0 +1,5 @@
+examples/
+__pycache__/
+.vscode/
+.DS_Store
+*.swp
