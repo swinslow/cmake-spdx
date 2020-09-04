@@ -1,0 +1,373 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "app/libapp.a"
+		}
+	],
+	"backtrace" : 7,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"zephyr_library_named",
+			"include",
+			"include_boilerplate",
+			"find_package",
+			"add_dependencies",
+			"target_link_libraries",
+			"target_sources"
+		],
+		"files" : 
+		[
+			"/home/steve/programming/zephyr/zephyrproject/zephyr/cmake/extensions.cmake",
+			"/home/steve/programming/zephyr/zephyrproject/zephyr/cmake/app/boilerplate.cmake",
+			"/home/steve/programming/zephyr/zephyrproject/zephyr/share/zephyr-package/cmake/ZephyrConfig.cmake",
+			"CMakeLists.txt",
+			"/home/steve/programming/zephyr/zephyrproject/zephyr/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 3
+			},
+			{
+				"command" : 4,
+				"file" : 3,
+				"line" : 4,
+				"parent" : 0
+			},
+			{
+				"file" : 2,
+				"parent" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 2,
+				"line" : 35,
+				"parent" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 24,
+				"parent" : 3
+			},
+			{
+				"file" : 1,
+				"parent" : 4
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 626,
+				"parent" : 5
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 371,
+				"parent" : 6
+			},
+			{
+				"file" : 4
+			},
+			{
+				"command" : 5,
+				"file" : 4,
+				"line" : 702,
+				"parent" : 8
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 375,
+				"parent" : 6
+			},
+			{
+				"command" : 7,
+				"file" : 3,
+				"line" : 7,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " "
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Os"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-imacros/home/steve/programming/zephyr/zephyrproject/zephyr/build/zephyr/include/generated/autoconf.h"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-ffreestanding"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fno-common"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-g"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-mcpu=cortex-m4"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-mthumb"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-mabi=aapcs"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-imacros/home/steve/programming/zephyr/zephyrproject/zephyr/include/toolchain/zephyr_stdint.h"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Wformat"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Wformat-security"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Wno-format-zero-length"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Wno-main"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Wno-address-of-packed-member"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Wno-pointer-sign"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Wpointer-arith"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Wno-unused-but-set-variable"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-Werror=implicit-int"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fno-asynchronous-unwind-tables"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fno-pie"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fno-pic"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fno-strict-overflow"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fno-reorder-functions"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fno-defer-pop"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fmacro-prefix-map=/home/steve/programming/zephyr/zephyrproject/zephyr/samples/basic/blinky=CMAKE_SOURCE_DIR"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fmacro-prefix-map=/home/steve/programming/zephyr/zephyrproject/zephyr=ZEPHYR_BASE"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fmacro-prefix-map=/home/steve/programming/zephyr/zephyrproject=WEST_TOPDIR"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-ffunction-sections"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-fdata-sections"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-std=c99"
+				},
+				{
+					"backtrace" : 10,
+					"fragment" : "-nostdinc"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 10,
+					"define" : "BUILD_VERSION=zephyr-v2.3.0-1706-gaf944ff6657b"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "CORE_CM4"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "HSE_VALUE=12000000"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "KERNEL"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "STM32F405xx"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "USE_FULL_LL_DRIVER"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "USE_HAL_DRIVER"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "_FORTIFY_SOURCE=2"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "__PROGRAM_START"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "__ZEPHYR__=1"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 10,
+					"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/include"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/build/zephyr/include/generated"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/soc/arm/st_stm32/stm32f4"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/drivers"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/soc/arm/st_stm32/common"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "/home/steve/programming/zephyr/zephyrproject/modules/hal/cmsis/CMSIS/Core/Include"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "/home/steve/programming/zephyr/zephyrproject/modules/hal/stm32/stm32cube/stm32f4xx/soc"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "/home/steve/programming/zephyr/zephyrproject/modules/hal/stm32/stm32cube/stm32f4xx/drivers/include"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "/home/steve/programming/zephyr/zephyrproject/modules/hal/stm32/stm32cube/stm32f4xx/drivers/include/Legacy"
+				},
+				{
+					"backtrace" : 10,
+					"isSystem" : true,
+					"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/lib/libc/minimal/include"
+				},
+				{
+					"backtrace" : 10,
+					"isSystem" : true,
+					"path" : "/home/steve/zephyr-sdk/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/9.2.0/include"
+				},
+				{
+					"backtrace" : 10,
+					"isSystem" : true,
+					"path" : "/home/steve/zephyr-sdk/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/9.2.0/include-fixed"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 9,
+			"id" : "zephyr_generated_headers::@d36e55b69c1b90fb26b2"
+		}
+	],
+	"id" : "app::@6890427a1f51a3e7e1df",
+	"name" : "app",
+	"nameOnDisk" : "libapp.a",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 11,
+			"compileGroupIndex" : 0,
+			"path" : "src/main.c",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

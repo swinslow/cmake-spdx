@@ -1,0 +1,72 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target"
+		],
+		"files" : 
+		[
+			"/home/steve/programming/zephyr/zephyrproject/zephyr/cmake/reports/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 7,
+				"parent" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"id" : "zephyr_final::@d36e55b69c1b90fb26b2"
+		}
+	],
+	"id" : "ram_report::@ca7f08113abe6c9ed8d3",
+	"name" : "ram_report",
+	"paths" : 
+	{
+		"build" : "zephyr/cmake/reports",
+		"source" : "/home/steve/programming/zephyr/zephyrproject/zephyr/cmake/reports"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"isGenerated" : true,
+			"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/build/zephyr/cmake/reports/CMakeFiles/ram_report",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/build/zephyr/cmake/reports/CMakeFiles/ram_report.rule",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "UTILITY"
+}
