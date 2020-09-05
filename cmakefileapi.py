@@ -11,6 +11,9 @@ class Codemodel:
         self.paths_build = ""
         self.configurations = []
 
+    def __repr__(self):
+        return f"Codemodel: source {self.paths_source}, build {self.paths_build}"
+
 # A member of the codemodel configurations array
 class Config:
 
@@ -21,6 +24,12 @@ class Config:
         self.directories = []
         self.projects = []
         self.configTargets = []
+
+    def __repr__(self):
+        if self.name == "":
+            return f"Config: [no name]"
+        else:
+            return f"Config: {self.name}"
 
 # A member of the configuration.directories array
 class ConfigDir:
@@ -37,6 +46,15 @@ class ConfigDir:
         self.minimumCMakeVersion = ""
         self.hasInstallRule = False
 
+        # actual items, calculated from indices after loading
+        self.parent = None
+        self.children = []
+        self.project = None
+        self.targets = []
+
+    def __repr__(self):
+        return f"ConfigDir: source {self.source}, build {self.build}"
+
 # A member of the configuration.projects array
 class ConfigProject:
 
@@ -48,6 +66,15 @@ class ConfigProject:
         self.childIndexes = []
         self.directoryIndexes = []
         self.targetIndexes = []
+
+        # actual items, calculated from indices after loading
+        self.parent = None
+        self.children = []
+        self.directories = []
+        self.targets = []
+
+    def __repr__(self):
+        return f"ConfigProject: {self.name}"
 
 # A member of the configuration.configTargets array
 class ConfigTarget:
@@ -63,6 +90,13 @@ class ConfigTarget:
 
         # actual target data, loaded from self.jsonFile
         self.target = None
+
+        # actual items, calculated from indices after loading
+        self.directory = None
+        self.project = None
+
+    def __repr__(self):
+        return f"ConfigTarget: {self.name}"
 
 # The available values for Target.type
 class TargetType(Enum):
@@ -83,6 +117,9 @@ class TargetInstallDestination:
         self.path = ""
         self.backtrace = -1
 
+    def __repr__(self):
+        return f"TargetInstallDestination: {self.path}"
+
 # A member of the target.link_commandFragments and
 # archive_commandFragments array
 class TargetCommandFragment:
@@ -93,6 +130,9 @@ class TargetCommandFragment:
         self.fragment = ""
         self.role = ""
 
+    def __repr__(self):
+        return f"TargetCommandFragment: {self.fragment}"
+
 # A member of the target.dependencies array
 class TargetDependency:
 
@@ -101,6 +141,9 @@ class TargetDependency:
 
         self.id = ""
         self.backtrace = -1
+
+    def __repr__(self):
+        return f"TargetDependency: {self.id}"
 
 # A member of the target.sources array
 class TargetSource:
@@ -114,6 +157,13 @@ class TargetSource:
         self.isGenerated = False
         self.backtrace = -1
 
+        # actual items, calculated from indices after loading
+        self.compileGroup = None
+        self.sourceGroup = None
+
+    def __repr__(self):
+        return f"TargetSource: {self.path}"
+
 # A member of the target.sourceGroups array
 class TargetSourceGroup:
 
@@ -122,6 +172,12 @@ class TargetSourceGroup:
 
         self.name = ""
         self.sourceIndexes = []
+
+        # actual items, calculated from indices after loading
+        self.sources = []
+
+    def __repr__(self):
+        return f"TargetSourceGroup: {self.name}"
 
 # A member of the target.compileGroups.includes array
 class TargetCompileGroupInclude:
@@ -133,6 +189,9 @@ class TargetCompileGroupInclude:
         self.isSystem = False
         self.backtrace = -1
 
+    def __repr__(self):
+        return f"TargetCompileGroupInclude: {self.path}"
+
 # A member of the target.compileGroups.precompileHeaders array
 class TargetCompileGroupPrecompileHeader:
 
@@ -142,6 +201,9 @@ class TargetCompileGroupPrecompileHeader:
         self.header = ""
         self.backtrace = -1
 
+    def __repr__(self):
+        return f"TargetCompileGroupPrecompileHeader: {self.header}"
+
 # A member of the target.compileGroups.defines array
 class TargetCompileGroupDefine:
 
@@ -150,6 +212,9 @@ class TargetCompileGroupDefine:
 
         self.define = ""
         self.backtrace = -1
+
+    def __repr__(self):
+        return f"TargetCompileGroupDefine: {self.define}"
 
 # A member of the target.compileGroups array
 class TargetCompileGroup:
@@ -165,6 +230,12 @@ class TargetCompileGroup:
         self.defines = []
         self.sysroot = ""
 
+        # actual items, calculated from indices after loading
+        self.sources = []
+
+    def __repr__(self):
+        return f"TargetCompileGroup: {self.sources}"
+
 # A member of the target.backtraceGraph_nodes array
 class TargetBacktraceGraphNode:
 
@@ -175,6 +246,9 @@ class TargetBacktraceGraphNode:
         self.line = -1
         self.command = -1
         self.parent = -1
+
+    def __repr__(self):
+        return f"TargetBacktraceGraphNode: {self.command}"
 
 # Actual data in config.target.target, loaded from
 # config.target.jsonFile
@@ -225,3 +299,6 @@ class Target:
         self.backtraceGraph_nodes = []
         self.backtraceGraph_commands = []
         self.backtraceGraph_files = []
+
+    def __repr__(self):
+        return f"Target: {self.name}"

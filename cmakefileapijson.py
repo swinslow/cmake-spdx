@@ -61,6 +61,9 @@ def parseCodemodel(replyDir, codemodelFile):
                 if cfg:
                     cm.configurations.append(cfg)
 
+            # and after parsing is done, link all the indices
+            linkCodemodel(cm)
+
             return cm
 
     except OSError as e:
@@ -310,3 +313,108 @@ def parseTargetBacktraceGraph(target, js):
         node.command = node_dict.get("command", -1)
         node.parent = node_dict.get("parent", -1)
         target.backtraceGraph_nodes.append(node)
+
+# Create direct pointers for all Configs in Codemodel
+# takes: Codemodel
+def linkCodemodel(cm):
+    for cfg in cm.configurations:
+        linkConfig(cfg)
+
+# Create direct pointers for all contents of Config
+# takes: Config
+def linkConfig(cfg):
+    for cfgDir in cfg.directories:
+        linkConfigDir(cfg, cfgDir)
+    for cfgPrj in cfg.projects:
+        linkConfigProject(cfg, cfgPrj)
+    for cfgTarget in cfg.configTargets:
+        linkConfigTarget(cfg, cfgTarget)
+
+# Create direct pointers for ConfigDir indices
+# takes: Config and ConfigDir
+def linkConfigDir(cfg, cfgDir):
+    if cfgDir.parentIndex == -1:
+        cfgDir.parent = None
+    else:
+        cfgDir.parent = cfg.directories[cfgDir.parentIndex]
+
+    if cfgDir.projectIndex == -1:
+        cfgDir.project = None
+    else:
+        cfgDir.project = cfg.projects[cfgDir.projectIndex]
+
+    cfgDir.children = []
+    for childIndex in cfgDir.childIndexes:
+        cfgDir.children.append(cfg.directories[childIndex])
+
+    cfgDir.targets = []
+    for targetIndex in cfgDir.targetIndexes:
+        cfgDir.targets.append(cfg.configTargets[targetIndex])
+
+# Create direct pointers for ConfigProject indices
+# takes: Config and ConfigProject
+def linkConfigProject(cfg, cfgPrj):
+    if cfgPrj.parentIndex == -1:
+        cfgPrj.parent = None
+    else:
+        cfgPrj.parent = cfg.projects[cfgPrj.parentIndex]
+
+    cfgPrj.children = []
+    for childIndex in cfgPrj.childIndexes:
+        cfgPrj.children.append(cfg.projects[childIndex])
+
+    cfgPrj.directories = []
+    for dirIndex in cfgPrj.directoryIndexes:
+        cfgPrj.directories.append(cfg.directories[dirIndex])
+
+    cfgPrj.targets = []
+    for targetIndex in cfgPrj.targetIndexes:
+        cfgPrj.targets.append(cfg.configTargets[targetIndex])
+
+# Create direct pointers for ConfigTarget indices
+# takes: Config and ConfigTarget
+def linkConfigTarget(cfg, cfgTarget):
+    if cfgTarget.directoryIndex == -1:
+        cfgTarget.directory = None
+    else:
+        cfgTarget.directory = cfg.directories[cfgTarget.directoryIndex]
+
+    if cfgTarget.projectIndex == -1:
+        cfgTarget.project = None
+    else:
+        cfgTarget.project = cfg.projects[cfgTarget.projectIndex]
+
+    # and link target's sources and source groups
+    for ts in cfgTarget.target.sources:
+        linkTargetSource(cfgTarget.target, ts)
+    for tsg in cfgTarget.target.sourceGroups:
+        linkTargetSourceGroup(cfgTarget.target, tsg)
+    for tcg in cfgTarget.target.compileGroups:
+        linkTargetCompileGroup(cfgTarget.target, tcg)
+
+# Create direct pointers for TargetSource indices
+# takes: Target and TargetSource
+def linkTargetSource(target, targetSrc):
+    if targetSrc.compileGroupIndex == -1:
+        targetSrc.compileGroup = None
+    else:
+        targetSrc.compileGroup = target.compileGroups[targetSrc.compileGroupIndex]
+
+    if targetSrc.sourceGroupIndex == -1:
+        targetSrc.sourceGroup = None
+    else:
+        targetSrc.sourceGroup = target.sourceGroups[targetSrc.sourceGroupIndex]
+
+# Create direct pointers for TargetSourceGroup indices
+# takes: Target and TargetSourceGroup
+def linkTargetSourceGroup(target, targetSrcGrp):
+    targetSrcGrp.sources = []
+    for srcIndex in targetSrcGrp.sourceIndexes:
+        targetSrcGrp.sources.append(target.sources[srcIndex])
+
+# Create direct pointers for TargetCompileGroup indices
+# takes: Target and TargetCompileGroup
+def linkTargetCompileGroup(target, targetCmpGrp):
+    targetCmpGrp.sources = []
+    for srcIndex in targetCmpGrp.sourceIndexes:
+        targetCmpGrp.sources.append(target.sources[srcIndex])
