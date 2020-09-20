@@ -369,7 +369,7 @@ Relationship: SPDXRef-DOCUMENT DESCRIBES {pkg.spdxID}
 
             # write file sections
             for bf in pkg.files:
-                f.write(f"""FileName: {bf.name}
+                f.write(f"""FileName: ./{os.path.relpath(bf.name, cfg.scandir)}
 SPDXID: {bf.spdxID}
 FileChecksum: SHA1: {bf.sha1}
 """)
@@ -399,7 +399,10 @@ def makeSPDX(cfg, spdxPath):
     Arguments:
         - cfg: BuilderConfig
         - spdxPath: path to write SPDX content
-    Returns: True on success, False on error.
+    Returns: BuilderPackage on success, None on failure.
     """
     pkg = makePackageData(cfg)
-    return outputSPDX(pkg, cfg, spdxPath)
+    if outputSPDX(pkg, cfg, spdxPath):
+        return pkg
+    else:
+        return None
