@@ -215,6 +215,24 @@ def getHashes(filePath):
 
     return (hSHA1.hexdigest(), hSHA256.hexdigest(), hMD5.hexdigest())
 
+def calculateVerificationCode(bfs):
+    """
+    Calculate the SPDX Package Verification Code for all files in the package.
+
+    Arguments:
+        - bfs: array of BuilderFiles
+    Returns: verification code as string
+    """
+    hashes = []
+    for bf in bfs:
+        hashes.append(bf.sha1)
+    hashes.sort()
+    filelist = "".join(hashes)
+
+    hSHA1 = hashlib.sha1()
+    hSHA1.update(filelist.encode('utf-8'))
+    return hSHA1.hexdigest()
+
 def makeFileData(filePath, cfg, fileno):
     """
     Scan for expression, get hashes, and fill in data.
@@ -324,6 +342,7 @@ def makePackageData(cfg):
         pkg.licenseConcluded = normalizeExpression(licsConcluded)
     pkg.licenseInfoFromFiles = licsFromFiles
     pkg.files = bfs
+    pkg.verificationCode = calculateVerificationCode(bfs)
 
     return pkg
 
