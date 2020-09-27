@@ -72,7 +72,6 @@ class BuilderPackage:
         self.name = ""
         self.spdxID = ""
         self.downloadLocation = ""
-        # FIXME not yet calculated
         self.verificationCode = ""
         self.licenseConcluded = ""
         self.licenseInfoFromFiles = []
