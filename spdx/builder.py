@@ -364,7 +364,7 @@ SPDXID: SPDXRef-DOCUMENT
 DocumentName: {cfg.documentName}
 DocumentNamespace: {cfg.documentNamespace}
 Creator: Tool: cmake-spdx
-Created: {datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")}
+Created: {datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}
 
 """)
 
