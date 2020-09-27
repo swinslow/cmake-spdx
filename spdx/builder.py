@@ -370,7 +370,6 @@ DocumentName: {cfg.documentName}
 DocumentNamespace: {cfg.documentNamespace}
 Creator: Tool: cmake-spdx
 Created: {datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}
-
 """)
             # write any external document references
             for extRef in cfg.extRefs:
