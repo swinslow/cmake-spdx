@@ -237,19 +237,78 @@ def calculateVerificationCode(bfs):
     hSHA1.update(filelist.encode('utf-8'))
     return hSHA1.hexdigest()
 
-def makeFileData(filePath, cfg, fileno):
+def getSPDXIDSafeCharacter(c):
+    """
+    Converts a character to an SPDX-ID-safe character.
+
+    Arguments:
+        - c: character to test
+    Returns: c if it is SPDX-ID-safe (letter, number, '-' or '.');
+             '-' otherwise
+    """
+    if c.isalpha() or c.isdigit() or c == "-" or c == ".":
+        return c
+    return "-"
+
+def convertToSPDXIDSafe(filenameOnly):
+    """
+    Converts a filename to only SPDX-ID-safe characters.
+    Note that a separate check (such as in getUniqueID, below) will need
+    to be used to confirm that this is still a unique identifier, after
+    conversion.
+
+    Arguments:
+        - filenameOnly: filename only (directories omitted) seeking ID.
+    Returns: filename with all non-safe characters replaced with dashes.
+    """
+    return "".join([getSPDXIDSafeCharacter(c) for c in filenameOnly])
+
+def getUniqueID(filenameOnly, timesSeen):
+    """
+    Find an SPDX ID that is unique among others seen so far.
+
+    Arguments:
+        - filenameOnly: filename only (directories omitted) seeking ID.
+        - timesSeen: dict of all filename-only to number of times seen.
+    Returns: unique SPDX ID; updates timesSeen to include it.
+    """
+
+    converted = convertToSPDXIDSafe(filenameOnly)
+    spdxID = f"SPDXRef-File-{converted}"
+
+    # determine whether spdxID is unique so far, or not
+    filenameTimesSeen = timesSeen.get(converted, 0) + 1
+    if filenameTimesSeen > 1:
+        # we'll append the # of times seen to the end
+        spdxID += f"-{filenameTimesSeen}"
+    else:
+        # first time seeing this filename
+        # however, if the filename itself, ends in "-{number}", then we
+        # need to add a "-1" to it, so that we don't end up overlapping
+        # with an appended number from a similarly-named file.
+        p = re.compile("-\d+$")
+        if p.search(converted):
+            spdxID += "-1"
+
+    timesSeen[converted] = filenameTimesSeen
+    return spdxID
+
+def makeFileData(filePath, cfg, timesSeen):
     """
     Scan for expression, get hashes, and fill in data.
 
     Arguments:
         - filePath: path to file to scan.
         - cfg: BuilderConfig for this scan.
-        - fileno: unique filenumber (used for SPDX ID)
+        - timesSeen: dict of all filename-only (converted to SPDX-ID-safe)
+                     to number of times seen.
     Returns: BuilderFile
     """
     bf = BuilderFile()
     bf.name = filePath
-    bf.spdxID = f"SPDXRef-File{fileno}"
+
+    filenameOnly = os.path.basename(filePath)
+    bf.spdxID = getUniqueID(filenameOnly, timesSeen)
 
     (sha1, sha256, md5) = getHashes(filePath)
     bf.sha1 = sha1
@@ -275,10 +334,11 @@ def makeAllFileData(filePaths, cfg):
     Returns: array of BuilderFiles
     """
     bfs = []
-    fileno = 1
+    # dict of filename-only (converted to SPDX-ID-safe) to number of times seen
+    # for use in making unique identifiers
+    timesSeen = {}
     for filePath in filePaths:
-        bf = makeFileData(filePath, cfg, fileno)
-        fileno += 1
+        bf = makeFileData(filePath, cfg, timesSeen)
         bfs.append(bf)
 
     return bfs
