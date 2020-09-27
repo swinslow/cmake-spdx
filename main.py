@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
+import hashlib
 import os
 import sys
 
@@ -27,6 +28,13 @@ def makeCmakeSpdx(replyIndexPath, srcRootDir, spdxOutputDir, spdxNamespacePrefix
     else:
         print(f"Couldn't generate sources SPDX file")
 
+    # get hash of sources SPDX file, to use for build doc's extRef
+    hSHA256 = hashlib.sha256()
+    with open(srcSpdxPath, 'rb') as f:
+        buf = f.read()
+        hSHA256.update(buf)
+    srcSHA256 = hSHA256.hexdigest()
+
     # create SPDX file for build
     buildSpdxPath = os.path.join(spdxOutputDir, "build.spdx")
     buildCfg = BuilderConfig()
@@ -36,11 +44,15 @@ def makeCmakeSpdx(replyIndexPath, srcRootDir, spdxOutputDir, spdxNamespacePrefix
     buildCfg.spdxID = "SPDXRef-build"
     buildCfg.doSHA256 = True
     buildCfg.scandir = cm.paths_build
+
+    # add external document ref to sources SPDX file
+    buildCfg.extRefs = [("DocumentRef-sources", srcCfg.documentNamespace, "SHA256", srcSHA256)]
+
     # exclude CMake file-based API responses -- presume only used for this
     # SPDX generation scan, not for actual build artifact
     buildExcludeDir = os.path.join(cm.paths_build, ".cmake", "api")
-    print(f"buildExcludeDir = {buildExcludeDir}")
     buildCfg.excludeDirs.append(buildExcludeDir)
+
     buildPkg = makeSPDX(buildCfg, buildSpdxPath)
     if buildPkg:
         print(f"Saved build SPDX to {buildSpdxPath}")

@@ -19,6 +19,11 @@ class BuilderConfig:
         # namespace for this document
         self.documentNamespace = ""
 
+        # external document refs that this document uses
+        # list of tuples of external doc refs, in format:
+        #    [("DocumentRef-<docID>", "<namespaceURI>", "<hashAlg>", "<hashValue>"), ...]
+        self.extRefs = []
+
         #####
         ##### Package / scan info
         #####
@@ -367,6 +372,10 @@ Creator: Tool: cmake-spdx
 Created: {datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}
 
 """)
+            # write any external document references
+            for extRef in cfg.extRefs:
+                f.write(f"ExternalDocumentRef: {extRef[0]} {extRef[1]} {extRef[2]}:{extRef[3]}\n")
+            f.write(f"\n")
 
             # write package section
             f.write(f"""PackageName: {pkg.name}
