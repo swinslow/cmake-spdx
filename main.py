@@ -21,8 +21,8 @@ def makeCmakeSpdx(replyIndexPath, srcRootDir, spdxOutputDir, spdxNamespacePrefix
     srcCfg.doSHA256 = True
     srcCfg.scandir = srcRootDir
     srcCfg.excludeDirs.append(cm.paths_build)
-    pkg = makeSPDX(srcCfg, srcSpdxPath)
-    if pkg:
+    srcPkg = makeSPDX(srcCfg, srcSpdxPath)
+    if srcPkg:
         print(f"Saved sources SPDX to {srcSpdxPath}")
     else:
         print(f"Couldn't generate sources SPDX file")
@@ -36,12 +36,16 @@ def makeCmakeSpdx(replyIndexPath, srcRootDir, spdxOutputDir, spdxNamespacePrefix
     buildCfg.spdxID = "SPDXRef-build"
     buildCfg.doSHA256 = True
     buildCfg.scandir = cm.paths_build
-    pkg = makeSPDX(buildCfg, buildSpdxPath)
-    if pkg:
+    # exclude CMake file-based API responses -- presume only used for this
+    # SPDX generation scan, not for actual build artifact
+    buildExcludeDir = os.path.join(cm.paths_build, ".cmake", "api")
+    print(f"buildExcludeDir = {buildExcludeDir}")
+    buildCfg.excludeDirs.append(buildExcludeDir)
+    buildPkg = makeSPDX(buildCfg, buildSpdxPath)
+    if buildPkg:
         print(f"Saved build SPDX to {buildSpdxPath}")
     else:
         print(f"Couldn't generate build SPDX file")
-
 
 if __name__ == "__main__":
     if len(sys.argv) < 5:
