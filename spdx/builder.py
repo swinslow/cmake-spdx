@@ -305,7 +305,7 @@ def makeFileData(filePath, cfg, timesSeen):
     Returns: BuilderFile
     """
     bf = BuilderFile()
-    bf.name = filePath
+    bf.name = os.path.join(".", os.path.relpath(filePath, cfg.scandir))
 
     filenameOnly = os.path.basename(filePath)
     bf.spdxID = getUniqueID(filenameOnly, timesSeen)
@@ -455,7 +455,7 @@ Relationship: SPDXRef-DOCUMENT DESCRIBES {pkg.spdxID}
 
             # write file sections
             for bf in pkg.files:
-                f.write(f"""FileName: ./{os.path.relpath(bf.name, cfg.scandir)}
+                f.write(f"""FileName: {bf.name}
 SPDXID: {bf.spdxID}
 FileChecksum: SHA1: {bf.sha1}
 """)
@@ -475,7 +475,7 @@ FileChecksum: SHA1: {bf.sha1}
             return True
 
     except OSError as e:
-        print(f"Unable to write to {spdxPath}: {str(e)}")
+        print(f"Error: Unable to write to {spdxPath}: {str(e)}")
         return False
 
 def makeSPDX(cfg, spdxPath):
