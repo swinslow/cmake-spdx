@@ -1,0 +1,66 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target"
+		],
+		"files" : 
+		[
+			"/home/steve/programming/zephyr/zephyrproject/zephyr/cmake/usage/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 6,
+				"parent" : 0
+			}
+		]
+	},
+	"id" : "usage::@94b61706647a07df483a",
+	"name" : "usage",
+	"paths" : 
+	{
+		"build" : "zephyr/cmake/usage",
+		"source" : "/home/steve/programming/zephyr/zephyrproject/zephyr/cmake/usage"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"isGenerated" : true,
+			"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/build/zephyr/cmake/usage/CMakeFiles/usage",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/build/zephyr/cmake/usage/CMakeFiles/usage.rule",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "UTILITY"
+}
