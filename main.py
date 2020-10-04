@@ -2,12 +2,15 @@
 
 import sys
 
-from cmakefileapijson import parseReply
+from sbom import makeCmakeSpdx
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <path-to-cmake-api-index.json>")
+    if len(sys.argv) < 5:
+        print(f"Usage: {sys.argv[0]} <path-to-cmake-api-index.json> <path-to-top-level-sources> <spdx-output-dir> <spdx-namespace-prefix>")
         sys.exit(1)
 
     replyIndexPath = sys.argv[1]
-    cm = parseReply(replyIndexPath)
+    srcRootDir = sys.argv[2]
+    spdxOutputDir = sys.argv[3]
+    spdxNamespacePrefix = sys.argv[4]
+    makeCmakeSpdx(replyIndexPath, srcRootDir, spdxOutputDir, spdxNamespacePrefix)
