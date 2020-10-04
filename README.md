@@ -22,6 +22,9 @@ It uses the CMake API metadata to determine which source files are built into wh
 
 The scanning process also looks for [SPDX short-form identifiers](https://spdx.dev/ids) as license information in the code, and records any that are found.
 
+Examples of the generated files for a sample run can be found at [`example/sources.spdx`](/example/sources.spdx) and [`example/build.spdx`](/example/build.spdx).
+A description of the process that was used for generating these files can be found in [process.md](/docs/process.md).
+
 ## More details
 
 See the following documents for more details:
