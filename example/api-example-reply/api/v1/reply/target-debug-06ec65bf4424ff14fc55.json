@@ -1,0 +1,72 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target"
+		],
+		"files" : 
+		[
+			"/home/steve/programming/zephyr/zephyrproject/zephyr/cmake/flash/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 207,
+				"parent" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"id" : "zephyr_final::@d36e55b69c1b90fb26b2"
+		}
+	],
+	"id" : "debug::@a247f7a48b0aa9995de3",
+	"name" : "debug",
+	"paths" : 
+	{
+		"build" : "zephyr/cmake/flash",
+		"source" : "/home/steve/programming/zephyr/zephyrproject/zephyr/cmake/flash"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"isGenerated" : true,
+			"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/build/zephyr/cmake/flash/CMakeFiles/debug",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "/home/steve/programming/zephyr/zephyrproject/zephyr/build/zephyr/cmake/flash/CMakeFiles/debug.rule",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "UTILITY"
+}
