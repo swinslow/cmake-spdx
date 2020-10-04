@@ -52,8 +52,8 @@ For the proof-of-concept run, I called it with:
 ```
 
 The arguments are:
-* _path-to-cmake-api-index.json_: `api-example-reply/api/v1/reply/index-2020-08-29T18-34-19-0138.json`: This is the path to the `index-\*.json` file in the `reply` directory from the CMake api response.
-  * This index file contains a pointer to the `codemodel-\*.json` file which is the real "table of contents" for the API response.
+* _path-to-cmake-api-index.json_: `api-example-reply/api/v1/reply/index-2020-08-29T18-34-19-0138.json`: This is the path to the `index-*.json` file in the `reply` directory from the CMake api response.
+  * This index file contains a pointer to the `codemodel-*.json` file which is the real "table of contents" for the API response.
   * The index file should be used as the starting point for making use of the CMake file API's response data. (See [here](https://cmake.org/cmake/help/latest/manual/cmake-file-api.7.html#v1-reply-index-file): "Clients must read the reply index file first and may read other v1 Reply Files only by following references.")
 * _path-to-top-level-sources_: `/home/steve/programming/zephyr/zephyrproject/`: This is the path to the top-level directory containing all of the relevant sources.
   * Ideally, this would not be a parameter that the user needs to pass, but should be derivable from following the various directory metadata in the CMake file API codemodel response.
