@@ -1,13 +1,13 @@
 # How cmake-spdx works
 
 Here's a quick overview of the files comprising cmake-spdx:
-  * [`cmakefileapi.py`](cmakefileapi.py): Python classes for an in-memory representation of the [CMake file-based API codemodel objects](https://cmake.org/cmake/help/latest/manual/cmake-file-api.7.html#object-kind-codemodel)
-  * [`cmakefileapijson.py`](cmakefileapijson.py): functionality to take a CMake API response's set of JSON files and parse it into the classes in `cmakefileapi.py`
-  * [`makedot.py`](makedot.py): _not currently used_; experiment used to create a Graphiz DOT file used to visualize the target dependency relationships in the CMake response
-  * [`sbom.py`](sbom.py): entry point (makeCmakeSpdx) to create the source and build SPDX documents
-  * [`spdx/builder.py`](spdx/builder.py): scans a given directory and creates a corresponding SPDX document
-  * [`spdx/relationships.py`](spdx/relationships.py): creates the [SPDX Relationships](https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/) between the built files and the corresponding source files
-  * [`main.py`](main.py): main entry point, calls makeCmakeSpdx from sbom.py
+  * [`cmakefileapi.py`](/cmakefileapi.py): Python classes for an in-memory representation of the [CMake file-based API codemodel objects](https://cmake.org/cmake/help/latest/manual/cmake-file-api.7.html#object-kind-codemodel)
+  * [`cmakefileapijson.py`](/cmakefileapijson.py): functionality to take a CMake API response's set of JSON files and parse it into the classes in `cmakefileapi.py`
+  * [`makedot.py`](/makedot.py): _not currently used_; experiment used to create a Graphiz DOT file used to visualize the target dependency relationships in the CMake response
+  * [`sbom.py`](/sbom.py): entry point (makeCmakeSpdx) to create the source and build SPDX documents
+  * [`spdx/builder.py`](/spdx/builder.py): scans a given directory and creates a corresponding SPDX document
+  * [`spdx/relationships.py`](/spdx/relationships.py): creates the [SPDX Relationships](https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/) between the built files and the corresponding source files
+  * [`main.py`](/main.py): main entry point, calls makeCmakeSpdx from sbom.py
 
 Below are a few comments on a couple of the perhaps-less-obvious parts of this.
 
