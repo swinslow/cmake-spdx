@@ -5,9 +5,9 @@ import hashlib
 import os
 import re
 
-class BuilderConfig:
+class BuilderDocumentConfig:
     def __init__(self):
-        super(BuilderConfig, self).__init__()
+        super(BuilderDocumentConfig, self).__init__()
 
         #####
         ##### Document info
@@ -24,12 +24,16 @@ class BuilderConfig:
         #    [("DocumentRef-<docID>", "<namespaceURI>", "<hashAlg>", "<hashValue>"), ...]
         self.extRefs = []
 
-        #####
-        ##### Package / scan info
-        #####
+        # configs for packages: package root dir => BuilderPackageConfig
+        self.packageConfigs = {}
 
-        # FIXME consider changing this to an array of multiple package configs
-        # FIXME so that one document can contain multiple packages
+class BuilderPackageConfig:
+    def __init__(self):
+        super(BuilderPackageConfig, self).__init__()
+
+        #####
+        ##### Package-specific config info
+        #####
 
         # name of package
         self.packageName = ""
@@ -70,29 +74,33 @@ class BuilderConfig:
         # defaults to 20
         self.numLinesScanned = 20
 
+class BuilderDocument:
+    def __init__(self, docCfg):
+        super(BuilderDocument, self).__init__()
+
+        # corresponding document configuration
+        self.config = docCfg
+
+        # packages in this document: package root dir => BuilderPackage
+        self.packages = {}
+        for rootPath, pkgCfg in docCfg.packageConfigs.items():
+            self.packages[rootPath] = BuilderPackage(pkgCfg)
+
 class BuilderPackage:
-    def __init__(self):
+    def __init__(self, pkgCfg):
         super(BuilderPackage, self).__init__()
 
-        self.name = ""
-        self.spdxID = ""
-        self.downloadLocation = ""
-        self.verificationCode = ""
-        self.licenseConcluded = ""
-        self.licenseInfoFromFiles = []
-        self.licenseDeclared = ""
-        self.copyrightText = ""
-        self.files = []
+        self.config = pkgCfg
 
-    def initFromConfig(self, cfg):
-        self.name = cfg.packageName
-        self.spdxID = cfg.spdxID
-        self.downloadLocation = cfg.packageDownloadLocation
+        self.name = pkgCfg.packageName
+        self.spdxID = pkgCfg.spdxID
+        self.downloadLocation = pkgCfg.packageDownloadLocation
         self.verificationCode = ""
         self.licenseConcluded = "NOASSERTION"
         self.licenseInfoFromFiles = []
-        self.licenseDeclared = cfg.declaredLicense
-        self.copyrightText = cfg.copyrightText
+        self.licenseDeclared = pkgCfg.declaredLicense
+        self.copyrightText = pkgCfg.copyrightText
+        self.files = []
 
 class BuilderFile:
     def __init__(self):
@@ -283,7 +291,7 @@ def getUniqueID(filenameOnly, timesSeen):
         spdxID += f"-{filenameTimesSeen}"
     else:
         # first time seeing this filename
-        # however, if the filename itself, ends in "-{number}", then we
+        # edge case: if the filename itself ends in "-{number}", then we
         # need to add a "-1" to it, so that we don't end up overlapping
         # with an appended number from a similarly-named file.
         p = re.compile("-\d+$")
@@ -293,52 +301,51 @@ def getUniqueID(filenameOnly, timesSeen):
     timesSeen[converted] = filenameTimesSeen
     return spdxID
 
-def makeFileData(filePath, cfg, timesSeen):
+def makeFileData(filePath, pkgCfg, timesSeen):
     """
     Scan for expression, get hashes, and fill in data.
 
     Arguments:
         - filePath: path to file to scan.
-        - cfg: BuilderConfig for this scan.
+        - pkgCfg: BuilderPackageConfig for this scan.
         - timesSeen: dict of all filename-only (converted to SPDX-ID-safe)
                      to number of times seen.
     Returns: BuilderFile
     """
     bf = BuilderFile()
-    bf.name = os.path.join(".", os.path.relpath(filePath, cfg.scandir))
+    bf.name = os.path.join(".", os.path.relpath(filePath, pkgCfg.scandir))
 
     filenameOnly = os.path.basename(filePath)
     bf.spdxID = getUniqueID(filenameOnly, timesSeen)
 
     (sha1, sha256, md5) = getHashes(filePath)
     bf.sha1 = sha1
-    if cfg.doSHA256:
+    if pkgCfg.doSHA256:
         bf.sha256 = sha256
-    if cfg.doMD5:
+    if pkgCfg.doMD5:
         bf.md5 = md5
 
-    expression = getExpressionData(filePath, cfg.numLinesScanned)
+    expression = getExpressionData(filePath, pkgCfg.numLinesScanned)
     if expression != None:
         bf.licenseConcluded = expression
         bf.licenseInfoInFile = splitExpression(expression)
 
     return bf
 
-def makeAllFileData(filePaths, cfg):
+def makeAllFileData(filePaths, pkgCfg, timesSeen):
     """
     Scan all files for expressions and hashes, and fill in data.
 
     Arguments:
         - filePaths: sorted array of paths to files to scan.
-        - cfg: BuilderConfig for this scan.
+        - pkgCfg: BuilderPackageConfig for this scan.
+        - timesSeen: dict of all filename-only (converted to SPDX-ID-safe)
+                     to number of times seen.
     Returns: array of BuilderFiles
     """
     bfs = []
-    # dict of filename-only (converted to SPDX-ID-safe) to number of times seen
-    # for use in making unique identifiers
-    timesSeen = {}
     for filePath in filePaths:
-        bf = makeFileData(filePath, cfg, timesSeen)
+        bf = makeFileData(filePath, pkgCfg, timesSeen)
         bfs.append(bf)
 
     return bfs
@@ -387,36 +394,49 @@ def normalizeExpression(licsConcluded):
             revised.append(lic)
     return " AND ".join(revised)
 
-def makePackageData(cfg):
+def makePackageData(pkg, timesSeen):
     """
     Create package and call sub-functions to scan and create file data.
 
     Arguments:
-        - cfg: BuilderConfig for this scan.
-    Returns: BuilderPackage
+        - pkg: BuilderPackage (already stored in BuilderDocument.packages)
+        - timesSeen: dict of all filename-only (converted to SPDX-ID-safe)
+                     to number of times seen.
+    Returns: None; fills in Package data in-place
     """
-    pkg = BuilderPackage()
-    pkg.initFromConfig(cfg)
-
-    filePaths = getAllPaths(cfg.scandir, cfg.excludeDirs)
-    bfs = makeAllFileData(filePaths, cfg)
+    filePaths = getAllPaths(pkg.config.scandir, pkg.config.excludeDirs)
+    bfs = makeAllFileData(filePaths, pkg.config, timesSeen)
     (licsConcluded, licsFromFiles) = getPackageLicenses(bfs)
 
-    if cfg.shouldConcludeLicense:
+    if pkg.config.shouldConcludeLicense:
         pkg.licenseConcluded = normalizeExpression(licsConcluded)
     pkg.licenseInfoFromFiles = licsFromFiles
     pkg.files = bfs
     pkg.verificationCode = calculateVerificationCode(bfs)
 
-    return pkg
+def makeDocument(docCfg):
+    """
+    Create BuilderDocument (and its sub-Packages) from BuilderDocumentConfig.
 
-def outputSPDX(pkg, cfg, spdxPath):
+    Arguments:
+        - cfg: BuilderDocumentConfig
+    Returns: BuilderDocument
+    """
+    doc = BuilderDocument(docCfg)
+    # dict of filename-only (converted to SPDX-ID-safe) to number of times seen
+    # for use in making unique identifiers
+    timesSeen = {}
+    for pkg in doc.packages.values():
+        makePackageData(pkg, timesSeen)
+
+    return doc
+
+def outputSPDX(doc, spdxPath):
     """
     Write SPDX doc, package and files content to disk.
 
     Arguments:
-        - pkg: BuilderPackage from makePackageData
-        - cfg: BuilderConfig
+        - doc: BuilderDocument
         - spdxPath: path to write SPDX content
     Returns: True on success, False on error.
     """
@@ -426,50 +446,53 @@ def outputSPDX(pkg, cfg, spdxPath):
             f.write(f"""SPDXVersion: SPDX-2.2
 DataLicense: CC0-1.0
 SPDXID: SPDXRef-DOCUMENT
-DocumentName: {cfg.documentName}
-DocumentNamespace: {cfg.documentNamespace}
+DocumentName: {doc.config.documentName}
+DocumentNamespace: {doc.config.documentNamespace}
 Creator: Tool: cmake-spdx
 Created: {datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}
 """)
             # write any external document references
-            for extRef in cfg.extRefs:
+            for extRef in doc.config.extRefs:
                 f.write(f"ExternalDocumentRef: {extRef[0]} {extRef[1]} {extRef[2]}:{extRef[3]}\n")
             f.write(f"\n")
 
-            # write package section
-            f.write(f"""PackageName: {pkg.name}
+            # write package sections
+            for pkg in doc.packages.values():
+                f.write(f"""##### Package: {pkg.name}
+
+PackageName: {pkg.name}
 SPDXID: {pkg.spdxID}
 PackageDownloadLocation: {pkg.downloadLocation}
 FilesAnalyzed: true
 PackageVerificationCode: {pkg.verificationCode}
 PackageLicenseConcluded: {pkg.licenseConcluded}
 """)
-            for licFromFiles in pkg.licenseInfoFromFiles:
-                f.write(f"PackageLicenseInfoFromFiles: {licFromFiles}\n")
-            f.write(f"""PackageLicenseDeclared: {pkg.licenseDeclared}
+                for licFromFiles in pkg.licenseInfoFromFiles:
+                    f.write(f"PackageLicenseInfoFromFiles: {licFromFiles}\n")
+                f.write(f"""PackageLicenseDeclared: {pkg.licenseDeclared}
 PackageCopyrightText: NOASSERTION
 
 Relationship: SPDXRef-DOCUMENT DESCRIBES {pkg.spdxID}
 
 """)
 
-            # write file sections
-            for bf in pkg.files:
-                f.write(f"""FileName: {bf.name}
+                # write file sections
+                for bf in pkg.files:
+                    f.write(f"""FileName: {bf.name}
 SPDXID: {bf.spdxID}
 FileChecksum: SHA1: {bf.sha1}
 """)
-                if bf.sha256 != "":
-                    f.write(f"FileChecksum: SHA256: {bf.sha256}\n")
-                if bf.md5 != "":
-                    f.write(f"FileChecksum: MD5: {bf.md5}\n")
-                f.write(f"LicenseConcluded: {bf.licenseConcluded}\n")
-                if len(bf.licenseInfoInFile) == 0:
-                    f.write(f"LicenseInfoInFile: NONE\n")
-                else:
-                    for licInfoInFile in bf.licenseInfoInFile:
-                        f.write(f"LicenseInfoInFile: {licInfoInFile}\n")
-                f.write(f"FileCopyrightText: {bf.copyrightText}\n\n")
+                    if bf.sha256 != "":
+                        f.write(f"FileChecksum: SHA256: {bf.sha256}\n")
+                    if bf.md5 != "":
+                        f.write(f"FileChecksum: MD5: {bf.md5}\n")
+                    f.write(f"LicenseConcluded: {bf.licenseConcluded}\n")
+                    if len(bf.licenseInfoInFile) == 0:
+                        f.write(f"LicenseInfoInFile: NONE\n")
+                    else:
+                        for licInfoInFile in bf.licenseInfoInFile:
+                            f.write(f"LicenseInfoInFile: {licInfoInFile}\n")
+                    f.write(f"FileCopyrightText: {bf.copyrightText}\n\n")
 
             # we're done for now; will do other relationships later
             return True
@@ -478,17 +501,17 @@ FileChecksum: SHA1: {bf.sha1}
         print(f"Error: Unable to write to {spdxPath}: {str(e)}")
         return False
 
-def makeSPDX(cfg, spdxPath):
+def makeSPDX(docCfg, spdxPath):
     """
     Scan, create and write SPDX details to disk.
 
     Arguments:
-        - cfg: BuilderConfig
+        - docCfg: BuilderDocumentConfig
         - spdxPath: path to write SPDX content
-    Returns: BuilderPackage on success, None on failure.
+    Returns: BuilderDocument on success, None on failure.
     """
-    pkg = makePackageData(cfg)
-    if outputSPDX(pkg, cfg, spdxPath):
-        return pkg
+    doc = makeDocument(docCfg)
+    if outputSPDX(doc, spdxPath):
+        return doc
     else:
         return None

@@ -2,57 +2,92 @@
 
 import os
 
-def resolveRelationshipID(srcRootDir, srcPkg, buildPkg, filepath):
+def resolveRelationshipID(relpathSrcDir, relpathBuildDir, srcDoc, buildDoc, filepath, is_build):
     """
     Determines the corresponding SPDX ID for filepath, depending on whether
     it is a source file or build file.
 
     Arguments:
-        - srcRootDir: root directory of sources being scanned
+        - relpathSrcDir: root directory of sources location for relative paths
+        - relpathBuildDir: root directory of build location for relative paths
         - srcPkg: source SPDX Package section data
         - buildPkg: build SPDX Package section data
         - filepath: path to file being resolved; might be absolute or relative
-
-    Returns: tuple (is_build, identifier) where:
-             is_build is True if filepath is for a build file, False if source file
-             identifier is the resolved ID or None if not resolvable
+        - is_build: should this file ID be in the build paths or the sources paths?
+    Returns: resolved ID or None if not resolvable
     """
     # figure out relative path we're searching for
     # FIXME this is probably not the right way to do this
-    is_build = filepath.startswith("./") or filepath.startswith(".\\")
+    is_relative = not(filepath.startswith("/") or filepath.startswith("\\"))
 
+    # figure out if maybe it's a build file based on its absolute path,
+    # even though we earlier concluded it was probably a sources file based on
+    # its relation to the target type
+    # FIXME this is really hackish -- we should be able to tell earlier in
+    # FIXME the process whether it's a sources or build file, but isGenerated
+    # FIXME doesn't always seem to be reliable
+    if not is_relative and (os.path.commonpath([relpathBuildDir, filepath]) == relpathBuildDir):
+        is_build = True
+
+    # exclude files that have a relative path above its root dir
+    # FIXME this is also probably not the right way to do this
+    if filepath.startswith("../") or filepath.startswith("..\\"):
+        # points to somewhere outside our sources root dir;
+        # we won't be able to create this relationship
+        print(f"{filepath} is not in sources root dir {srcRootDir}, can't create relationship")
+        return None
+
+    # is this a file from the build results?
     if is_build:
-        pkg = buildPkg
-        searchPath = filepath
-    else:
-        pkg = srcPkg
-        # make sure filepath is actually within the sources root dir
-        checkPath = os.path.relpath(filepath, srcRootDir)
-        # FIXME this is also probably not the right way to do this
-        if checkPath.startswith("../") or checkPath.startswith("..\\"):
-            # points to somewhere outside our sources root dir;
-            # we won't be able to create this relationship
-            print(f"{filepath} is not in sources root dir {srcRootDir}, can't create relationship")
-            return (is_build, None)
-        searchPath = os.path.join(".", checkPath)
+        if is_relative:
+            searchPath = filepath
+        else:
+            searchPath = os.path.join(".", os.path.relpath(filepath, relpathBuildDir))
+        # only one package in the build doc; get the "first" one
+        for p in buildDoc.packages.values():
+            pkg = p
+            break
 
-    # search through files for the one with this filename
-    for f in pkg.files:
-        if f.name == searchPath:
-            return (is_build, f.spdxID)
+        # search through files for the one with this filename
+        for f in pkg.files:
+            if os.path.normpath(f.name) == os.path.normpath(searchPath):
+                return f.spdxID
 
-    print(f"{filepath} not found in package, can't create relationship")
-    return (is_build, None)
+        print(f"{filepath} not found in build document, can't create relationship")
+        return None
 
-def outputSPDXRelationships(srcRootDir, srcPkg, buildPkg, rlns, spdxPath):
+    # if we get here, it's a sources file
+    # search the sources doc's packages for which one has this file
+    # FIXME note that this may pick the wrong sources package / file path
+    # FIXME   if two sources packages have the exact same file path
+    # FIXME currently it will just go through in order and pick the first one
+    # FIXME   that matches
+    found_match = False
+    for srcRootDir, srcPkg in srcDoc.packages.items():
+        if is_relative:
+            searchPath = filepath
+        else:
+            searchPath = os.path.join(".", os.path.relpath(filepath, srcRootDir))
+
+        # search through files for the one with this filename
+        for f in srcPkg.files:
+            if os.path.normpath(f.name) == os.path.normpath(searchPath):
+                return f.spdxID
+
+    # if we get here, we checked all the source packages and couldn't find it
+    print(f"{filepath} (is_relative: {is_relative}, searchPath: {searchPath} not found in sources document, can't create relationship")
+    return None
+
+def outputSPDXRelationships(relpathSrcDir, relpathBuildDir, srcDoc, buildDoc, rlns, spdxPath):
     """
     Create and append SPDX relationships to the end of the previously-created
     SPDX build document.
 
     Arguments:
-        - srcRootDir: root directory of sources being scanned
-        - srcPkg: source SPDX Package section data
-        - buildPkg: build SPDX Package section data
+        - relpathSrcDir: root directory of sources location for relative paths
+        - relpathBuildDir: root directory of build location for relative paths
+        - srcDoc: source SPDX Document data
+        - buildDoc: build SPDX Document data
         - rlns: Cmake relationship data from call to getCmakeRelationships()
         - spdxPath: path to previously-started SPDX build document
     Returns: True on success, False on error.
@@ -60,8 +95,14 @@ def outputSPDXRelationships(srcRootDir, srcPkg, buildPkg, rlns, spdxPath):
     try:
         with open(spdxPath, "a") as f:
             for rln in rlns:
-                (is_buildA, rlnIDA) = resolveRelationshipID(srcRootDir, srcPkg, buildPkg, rln[0])
-                (is_buildB, rlnIDB) = resolveRelationshipID(srcRootDir, srcPkg, buildPkg, rln[2])
+                pathA = rln[0]
+                is_buildA = rln[1]
+                rln_type = rln[2]
+                pathB = rln[3]
+                is_buildB = rln[4]
+
+                rlnIDA = resolveRelationshipID(relpathSrcDir, relpathBuildDir, srcDoc, buildDoc, pathA, is_buildA)
+                rlnIDB = resolveRelationshipID(relpathSrcDir, relpathBuildDir, srcDoc, buildDoc, pathB, is_buildB)
                 if not rlnIDA or not rlnIDB:
                     continue
 
@@ -71,7 +112,7 @@ def outputSPDXRelationships(srcRootDir, srcPkg, buildPkg, rlns, spdxPath):
                 if not is_buildB:
                     rlnIDB = "DocumentRef-sources:" + rlnIDB
 
-                f.write(f"Relationship: {rlnIDA} {rln[1]} {rlnIDB}\n")
+                f.write(f"Relationship: {rlnIDA} {rln_type} {rlnIDB}\n")
             return True
 
     except OSError as e:
