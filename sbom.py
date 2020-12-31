@@ -2,10 +2,11 @@
 
 import hashlib
 import os
+import sys
 
 from cmakefileapi import TargetType
 from cmakefileapijson import parseReply
-from spdx.builder import BuilderDocumentConfig, BuilderPackageConfig, makeSPDX
+from spdx.builder import BuilderDocumentConfig, BuilderPackageConfig, convertToSPDXIDSafe, makeSPDX
 from spdx.relationships import outputSPDXRelationships
 
 def getCmakeRelationships(cm):
@@ -60,13 +61,13 @@ def getCmakeRelationships(cm):
                             break
     return rlns
 
-def makeCmakeSpdx(replyIndexPath, srcRootDirs, spdxOutputDir, spdxNamespacePrefix):
+def makeCmakeSpdx(cm, srcRootDirs, spdxOutputDir, spdxNamespacePrefix):
     """
     Parse Cmake data and scan source / build directories, and create a
     corresponding SPDX tag-value document.
 
     Arguments:
-        - replyIndexPath: path to index file from Cmake API reply JSON file
+        - cm: Cmake codemodel parsed by parseReply()
         - srcRootDirs: mapping of package SPDX ID (without "SPDXRef-") =>
                        sources root dir
         - spdxOutputDir: output directory where SPDX documents will be written
@@ -75,9 +76,6 @@ def makeCmakeSpdx(replyIndexPath, srcRootDirs, spdxOutputDir, spdxNamespacePrefi
             section in SPDX spec for more information
     Returns: None
     """
-    # get CMake info from build
-    cm = parseReply(replyIndexPath)
-
     # create SPDX file for sources
     srcSpdxPath = os.path.join(spdxOutputDir, "sources.spdx")
     srcDocCfg = BuilderDocumentConfig()
@@ -144,3 +142,56 @@ def makeCmakeSpdx(replyIndexPath, srcRootDirs, spdxOutputDir, spdxNamespacePrefi
         print(f"Couldn't add relationships to build SPDX file")
 
     # FIXME should probably return True/False with success value
+
+def makeSpdxFromCmakeReply(replyIndexPath, spdxOutputDir, spdxNamespacePrefix):
+    """
+    Parse Cmake data to determine source / build directories, and call
+    makeCmakeSpdx to create the corresponding SPDX tag-value document.
+
+    Arguments:
+        - replyIndexPath: path to index file from Cmake API reply JSON file
+        - spdxOutputDir: output directory where SPDX documents will be written
+        - spdxNamespacePrefix: prefix for SPDX Document Namespace (will have
+            "sources" and "build" appended); see Document Creation Info
+            section in SPDX spec for more information
+    Returns: None
+    """
+    # get CMake info from build
+    cm = parseReply(replyIndexPath)
+
+    # determine source packages and directory mappings
+    srcRootDirs = {}
+    for prj in cm.configurations[0].projects:
+        # go through the directories and determine top directory for this package
+        seen_first_dir = False
+        is_prj_relative = False
+        should_skip = False
+        dirs_seen = []
+        for dt in prj.directories:
+            # make sure each project has either just relative or just absolute paths
+            # FIXME this is probably not the right way to do this
+            is_dir_relative = not(dt.source.startswith("/") or dt.source.startswith("\\"))
+            if not seen_first_dir:
+                is_prj_relative = is_dir_relative
+                seen_first_dir = True
+            else:
+                if is_prj_relative != is_dir_relative:
+                    print(f"directories for project {prj.name} contain both absolute and relative paths; skipping")
+                    should_skip = True
+                    break
+            dirs_seen.append(dt.source)
+        if should_skip:
+            break
+        srcRootDir = os.path.commonpath(dirs_seen)
+        if is_prj_relative:
+            srcRootDir = os.path.join(cm.paths_source, srcRootDir)
+
+        # make SPDX ID for package
+        # FIXME this needs to also ensure there isn't overlap in IDs
+        pkgID = convertToSPDXIDSafe(prj.name)
+
+        # add it to map
+        srcRootDirs[pkgID] = srcRootDir
+
+    # scan and create SPDX document
+    makeCmakeSpdx(cm, srcRootDirs, spdxOutputDir, spdxNamespacePrefix)
