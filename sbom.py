@@ -97,6 +97,7 @@ def makeCmakeSpdx(cm, srcRootDirs, spdxOutputDir, spdxNamespacePrefix):
         print(f"Saved sources SPDX to {srcSpdxPath}")
     else:
         print(f"Couldn't generate sources SPDX file")
+        return False
 
     # get hash of sources SPDX file, to use for build doc's extRef
     hSHA256 = hashlib.sha256()
@@ -134,6 +135,7 @@ def makeCmakeSpdx(cm, srcRootDirs, spdxOutputDir, spdxNamespacePrefix):
         print(f"Saved build SPDX to {buildSpdxPath}")
     else:
         print(f"Couldn't generate build SPDX file")
+        return False
 
     # and print relationships to build file also
     retval = outputSPDXRelationships(cm.paths_source, cm.paths_build, srcDoc, buildDoc, fileRlns, buildSpdxPath)
@@ -141,8 +143,9 @@ def makeCmakeSpdx(cm, srcRootDirs, spdxOutputDir, spdxNamespacePrefix):
         print(f"Added relationships to {buildSpdxPath}")
     else:
         print(f"Couldn't add relationships to build SPDX file")
+        return False
 
-    # FIXME should probably return True/False with success value
+    return True
 
 def makeSpdxFromCmakeReply(replyIndexPath, spdxOutputDir, spdxNamespacePrefix):
     """
