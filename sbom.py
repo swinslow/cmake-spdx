@@ -2,10 +2,11 @@
 
 import hashlib
 import os
+import sys
 
 from cmakefileapi import TargetType
 from cmakefileapijson import parseReply
-from spdx.builder import BuilderConfig, makeSPDX
+from spdx.builder import BuilderDocumentConfig, BuilderPackageConfig, convertToSPDXIDSafe, makeSPDX
 from spdx.relationships import outputSPDXRelationships
 
 def getCmakeRelationships(cm):
@@ -16,7 +17,7 @@ def getCmakeRelationships(cm):
 
     Arguments:
         - cm: CodeModel
-    Returns: list of tuples with relationships: [(filepath1, rln, filepath2), ...]
+    Returns: list of tuples with relationships: [(filepathA, is_buildA, rln, filepathB, is_buildB), ...]
     """
     # get relative path: os.path.relpath(filename, cfg.scandir)
     rlns = []
@@ -32,7 +33,9 @@ def getCmakeRelationships(cm):
                 continue
             artifactPath = target.artifacts[0]
             for src in target.sources:
-                newRln = (os.path.join(".", artifactPath), "GENERATED_FROM", src.path)
+                # FIXME this assumes that isGenerated tells us whether the file
+                # FIXME is in build or sources; may not always be correct
+                newRln = (os.path.join(".", artifactPath), True, "GENERATED_FROM", src.path, src.isGenerated)
                 rlns.append(newRln)
             # also, if any dependencies of static libraries or executables created
             # artifacts, include STATIC_LINK relationships for those
@@ -50,27 +53,46 @@ def getCmakeRelationships(cm):
                                 print(f"For dependency {depTarget.name}, expected 1 artifact, got {len(depTarget.artifacts)}; not generating linking relationship")
                                 continue
                             depArtifactPath = depTarget.artifacts[0]
-                            newDepRln = (os.path.join(".", artifactPath), "STATIC_LINK", os.path.join(".", depArtifactPath))
+                            # FIXME this assumes that artifacts are always statically linking to something
+                            # FIXME that was in the build directory; may not always be correct
+                            newDepRln = (os.path.join(".", artifactPath), True, "STATIC_LINK",
+                                         os.path.join(".", depArtifactPath), True)
                             rlns.append(newDepRln)
                             break
     return rlns
 
-def makeCmakeSpdx(replyIndexPath, srcRootDir, spdxOutputDir, spdxNamespacePrefix):
-    # get CMake info from build
-    cm = parseReply(replyIndexPath)
+def makeCmakeSpdx(cm, srcRootDirs, spdxOutputDir, spdxNamespacePrefix):
+    """
+    Parse Cmake data and scan source / build directories, and create a
+    corresponding SPDX tag-value document.
 
+    Arguments:
+        - cm: Cmake codemodel parsed by parseReply()
+        - srcRootDirs: mapping of package SPDX ID (without "SPDXRef-") =>
+                       sources root dir
+        - spdxOutputDir: output directory where SPDX documents will be written
+        - spdxNamespacePrefix: prefix for SPDX Document Namespace (will have 
+            "sources" and "build" appended); see Document Creation Info
+            section in SPDX spec for more information
+    Returns: None
+    """
     # create SPDX file for sources
     srcSpdxPath = os.path.join(spdxOutputDir, "sources.spdx")
-    srcCfg = BuilderConfig()
-    srcCfg.documentName = "sources"
-    srcCfg.documentNamespace = os.path.join(spdxNamespacePrefix, "sources")
-    srcCfg.packageName = "sources"
-    srcCfg.spdxID = "SPDXRef-sources"
-    srcCfg.doSHA256 = True
-    srcCfg.scandir = srcRootDir
-    srcCfg.excludeDirs.append(cm.paths_build)
-    srcPkg = makeSPDX(srcCfg, srcSpdxPath)
-    if srcPkg:
+    srcDocCfg = BuilderDocumentConfig()
+    srcDocCfg.documentName = "sources"
+    srcDocCfg.documentNamespace = os.path.join(spdxNamespacePrefix, "sources")
+    for pkgID, pkgRootDir in srcRootDirs.items():
+        srcPkgCfg = BuilderPackageConfig()
+        srcPkgCfg.packageName = pkgID + " sources"
+        srcPkgCfg.spdxID = "SPDXRef-" + pkgID
+        srcPkgCfg.doSHA256 = True
+        srcPkgCfg.scandir = pkgRootDir
+        # FIXME is this correct as-is, or needs adjustment / resolve relative?
+        srcPkgCfg.excludeDirs.append(cm.paths_build)
+        srcDocCfg.packageConfigs[pkgRootDir] = srcPkgCfg
+
+    srcDoc = makeSPDX(srcDocCfg, srcSpdxPath)
+    if srcDoc:
         print(f"Saved sources SPDX to {srcSpdxPath}")
     else:
         print(f"Couldn't generate sources SPDX file")
@@ -87,31 +109,89 @@ def makeCmakeSpdx(replyIndexPath, srcRootDir, spdxOutputDir, spdxNamespacePrefix
 
     # create SPDX file for build
     buildSpdxPath = os.path.join(spdxOutputDir, "build.spdx")
-    buildCfg = BuilderConfig()
-    buildCfg.documentName = "build"
-    buildCfg.documentNamespace = os.path.join(spdxNamespacePrefix, "build")
-    buildCfg.packageName = "build"
-    buildCfg.spdxID = "SPDXRef-build"
-    buildCfg.doSHA256 = True
-    buildCfg.scandir = cm.paths_build
+    buildDocCfg = BuilderDocumentConfig()
+    buildDocCfg.documentName = "build"
+    buildDocCfg.documentNamespace = os.path.join(spdxNamespacePrefix, "build")
+
+    buildPkgCfg = BuilderPackageConfig()
+    buildPkgCfg.packageName = "build"
+    buildPkgCfg.spdxID = "SPDXRef-build"
+    buildPkgCfg.doSHA256 = True
+    buildPkgCfg.scandir = cm.paths_build
+    buildDocCfg.packageConfigs[cm.paths_build] = buildPkgCfg
 
     # add external document ref to sources SPDX file
-    buildCfg.extRefs = [("DocumentRef-sources", srcCfg.documentNamespace, "SHA256", srcSHA256)]
+    buildDocCfg.extRefs = [("DocumentRef-sources", srcDocCfg.documentNamespace, "SHA256", srcSHA256)]
 
     # exclude CMake file-based API responses -- presume only used for this
     # SPDX generation scan, not for actual build artifact
     buildExcludeDir = os.path.join(cm.paths_build, ".cmake", "api")
-    buildCfg.excludeDirs.append(buildExcludeDir)
+    buildPkgCfg.excludeDirs.append(buildExcludeDir)
 
-    buildPkg = makeSPDX(buildCfg, buildSpdxPath)
-    if buildPkg:
+    buildDoc = makeSPDX(buildDocCfg, buildSpdxPath)
+    if buildDoc:
         print(f"Saved build SPDX to {buildSpdxPath}")
     else:
         print(f"Couldn't generate build SPDX file")
 
     # and print relationships to build file also
-    retval = outputSPDXRelationships(srcRootDir, srcPkg, buildPkg, fileRlns, buildSpdxPath)
+    retval = outputSPDXRelationships(cm.paths_source, cm.paths_build, srcDoc, buildDoc, fileRlns, buildSpdxPath)
     if retval:
         print(f"Added relationships to {buildSpdxPath}")
     else:
         print(f"Couldn't add relationships to build SPDX file")
+
+    # FIXME should probably return True/False with success value
+
+def makeSpdxFromCmakeReply(replyIndexPath, spdxOutputDir, spdxNamespacePrefix):
+    """
+    Parse Cmake data to determine source / build directories, and call
+    makeCmakeSpdx to create the corresponding SPDX tag-value document.
+
+    Arguments:
+        - replyIndexPath: path to index file from Cmake API reply JSON file
+        - spdxOutputDir: output directory where SPDX documents will be written
+        - spdxNamespacePrefix: prefix for SPDX Document Namespace (will have
+            "sources" and "build" appended); see Document Creation Info
+            section in SPDX spec for more information
+    Returns: None
+    """
+    # get CMake info from build
+    cm = parseReply(replyIndexPath)
+
+    # determine source packages and directory mappings
+    srcRootDirs = {}
+    for prj in cm.configurations[0].projects:
+        # go through the directories and determine top directory for this package
+        seen_first_dir = False
+        is_prj_relative = False
+        should_skip = False
+        dirs_seen = []
+        for dt in prj.directories:
+            # make sure each project has either just relative or just absolute paths
+            # FIXME this is probably not the right way to do this
+            is_dir_relative = not(dt.source.startswith("/") or dt.source.startswith("\\"))
+            if not seen_first_dir:
+                is_prj_relative = is_dir_relative
+                seen_first_dir = True
+            else:
+                if is_prj_relative != is_dir_relative:
+                    print(f"directories for project {prj.name} contain both absolute and relative paths; skipping")
+                    should_skip = True
+                    break
+            dirs_seen.append(dt.source)
+        if should_skip:
+            break
+        srcRootDir = os.path.commonpath(dirs_seen)
+        if is_prj_relative:
+            srcRootDir = os.path.join(cm.paths_source, srcRootDir)
+
+        # make SPDX ID for package
+        # FIXME this needs to also ensure there isn't overlap in IDs
+        pkgID = convertToSPDXIDSafe(prj.name)
+
+        # add it to map
+        srcRootDirs[pkgID] = srcRootDir
+
+    # scan and create SPDX document
+    makeCmakeSpdx(cm, srcRootDirs, spdxOutputDir, spdxNamespacePrefix)
