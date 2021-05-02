@@ -5,7 +5,7 @@ DocumentName: build
 DocumentNamespace: https://swinslow.net/zephyr/build
 Creator: Tool: cmake-spdx
 Created: 2020-10-04T18:39:32Z
-ExternalDocumentRef: DocumentRef-sources https://swinslow.net/zephyr/sources SHA256:1c30e91c4e55f3f48cce02d994bbaf455c1b8a6b11ed40ecf641f0ecca42f964
+ExternalDocumentRef: DocumentRef-sources https://swinslow.net/zephyr/sources SHA1: 02565f536bf1aa37b7f0b08ae4a47d26cdd892e5
 
 PackageName: build
 SPDXID: SPDXRef-build
